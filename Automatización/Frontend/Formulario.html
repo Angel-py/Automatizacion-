@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #fcfcfc; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; }
+    input, textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 5px; }
+    .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; }
+    .checkbox-group input { width: auto; }
+    .btn { width: 100%; padding: 12px; background: #0b57d0; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+    .btn:disabled { background: #ccc; }
+    select { 
+    width: 100%; 
+    padding: 10px; 
+    box-sizing: border-box; 
+    border: 1px solid #ddd; 
+    border-radius: 5px; 
+    background-color: white;
+  }
+  </style>
+</head>
+<body>
+  <div class="form-group">
+    <label>MRN (Identificador)</label>
+    <input type="text" id="mrn" placeholder="Ingrese MRN para buscar...">
+  </div>
+  
+<div class="form-group">
+  <label>Result</label>
+  <select id="result">
+    <option value="" disabled selected>Seleccione un resultado...</option>
+    <option value="Valid">Valid</option>
+    <option value="Not Valid">Not Valid</option>
+  </select>
+</div>
+
+  <div class="form-group">
+    <label>Summary</label>
+    <textarea id="summary" rows="4"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label id="labelAudio">Agent Recording (Audio)</label>
+    <input type="file" id="audioFile" accept="audio/*">
+    <div class="checkbox-group">
+      <input type="checkbox" id="noAudio" onchange="toggleAudio(this)">
+      <span>No tengo el audio / No disponible</span>
+    </div>
+  </div>
+
+  <button class="btn" id="btnRun" onclick="validarYEnviar()">Sincronizar y Guardar</button>
+  <p id="status" style="font-size: 11px; color: #666; text-align: center;"></p>
+
+  <script>
+    function toggleAudio(cb) {
+      const fileInput = document.getElementById('audioFile');
+      fileInput.disabled = cb.checked;
+      fileInput.style.opacity = cb.checked ? "0.5" : "1";
+    }
+
+    function validarYEnviar() {
+      const mrn = document.getElementById('mrn').value;
+      if (!mrn) return alert("El MRN es obligatorio para la búsqueda.");
+
+      const btn = document.getElementById('btnRun');
+      btn.disabled = true;
+      document.getElementById('status').innerText = "Buscando en bases de datos externas...";
+
+      const fileInput = document.getElementById('audioFile');
+      const noAudio = document.getElementById('noAudio').checked;
+
+      if (!noAudio && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64 = e.target.result.split(',')[1];
+          enviar(base64, file.type, file.name, false);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        enviar(null, null, null, noAudio);
+      }
+    }
+
+    function enviar(bytes, type, name, sinAudio) {
+      const payload = {
+        mrn: document.getElementById('mrn').value,
+        result: document.getElementById('result').value,
+        summary: document.getElementById('summary').value,
+        audioBytes: bytes,
+        audioContentType: type,
+        audioNombre: name,
+        sinAudio: sinAudio
+      };
+
+      google.script.run
+        .withSuccessHandler(res => {
+          alert(res);
+          google.script.host.close();
+        })
+        .withFailureHandler(err => {
+          
+          alert("ERROR DE VALIDACIÓN: " + err.message);
+          document.getElementById('btnRun').disabled = false;
+          document.getElementById('status').innerText = "Corrija el MRN y vuelva a intentar.";
+          document.getElementById('status').style.color = "red";
+        })
+        .procesarFormulario(payload);
+    }
+  </script>
+</body>
+</html>
