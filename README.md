@@ -24,7 +24,6 @@ Alertas Visuales: Resaltado automático en rojo para resultados "Not Valid" o "R
 
 Gestión de Multimedia: Genera enlaces directos a las grabaciones de audio (Agent Recording) almacenadas en Google Drive.
 
-Interfaz Profesional: Diseño responsivo con logotipos corporativos integrados.
 
 🛠️ Stack Tecnológico
 Lenguaje: JavaScript / Google Apps Script.
